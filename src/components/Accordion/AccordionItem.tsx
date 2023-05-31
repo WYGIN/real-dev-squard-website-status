@@ -46,7 +46,9 @@ export const AccordionItem = ({ as = 'div', title, description, icon =  }: Accor
     <as class='accordion__item'>
       <div class='accordion__item__header'>
         <h3 class='accordion__item__header__title'>{title}</h3>
-        <button class='accordion__item__header__button' aria-expanded=`${expandedPosition === currentPosition}` aria-controls='accordion-pannel' id='accordion-header-button'>
+        <button class='accordion__item__header__button' aria-expanded=`${expandedPosition === currentPosition}` aria-controls='accordion-pannel' id='accordion-header-button' onClick={() => {
+            setExpandedPosition(expandedPosition === currentPosition ? null : currentPosition);
+          }}>
           <icon class='accordion__item__header__button__icon' />
         </button>
       </div>
