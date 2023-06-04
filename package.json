@@ -6,7 +6,7 @@
   "scripts": {
     "run-command:dev-server": "next dev -p 3000",
     "run-command:reverse-ssl": "local-ssl-proxy --source 443 --target 3000",
-    "dev": "run-p run-command:*",
+    "dev": "next dev -p 3000",
     "build:staging":"cp .env.development .env.local && next build",
     "build": "next build",
     "start": "next start -p $PORT",
