@@ -7,7 +7,7 @@ export const WELCOME_URL = 'https://welcome.realdevsquad.com';
 export const EVENTS_URL = 'https://www.realdevsquad.com/events.html';
 export const CRYPTO_URL = 'https://crypto.realdevsquad.com';
 export const STATUS_URL = 'https://status.realdevsquad.com';
-export const LOGIN_URL = `https://github.com/login/oauth/authorize?client_id=2bfae6ca8d1170ab6ddd&state=${BASE_URL}&redirect_uri=${BASE_URL}`;
+export const LOGIN_URL = `https://github.com/login/oauth/authorize?client_id=2bfae6ca8d1170ab6ddd&state=${BASE_URL}&redirect_uri=${'http://8000-wygin-websitebackend-tqf7xjfehsf.ws-us98.gitpod.io'}`;
 export const MEMBERS_URL = 'https://members.realdevsquad.com';
 export const CHALLENGES_URL = `${BASE_URL}/challenges`;
 export const USER_SELF = `${BASE_URL}/users/self`;
