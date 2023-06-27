@@ -5,9 +5,7 @@ import React, {
     useContext,
     useRef,
     useState,
-    ChangeEventHandler,
 } from 'react';
-import NavBar from '@/components/navBar/index';
 import TaskContainer from './TaskContainer';
 import Details from './Details';
 import { isUserAuthorizedContext } from '@/context/isUserAuthorized';
@@ -15,21 +13,20 @@ import { toast, ToastTypes } from '@/helperFunctions/toast';
 import convertTimeStamp from '@/helperFunctions/convertTimeStamp';
 import classNames from './task-details.module.scss';
 import { useRouter } from 'next/router';
+import { TASKS_URL } from '@/constants/url';
+import fetch from '@/helperFunctions/fetch';
+import Link from 'next/link';
 import {
     useGetTaskDetailsQuery,
     useUpdateTaskDetailsMutation,
 } from '@/app/services/taskDetailsApi';
+import {
+    ButtonProps,
+    TextAreaProps,
+    taskDetailsDataType,
+} from '@/interfaces/taskDetails.type';
+import Layout from '@/components/Layout';
 
-type ButtonProps = {
-    buttonName: string;
-    clickHandler: (value: any) => void;
-    value?: boolean;
-};
-type TextAreaProps = {
-    name: string;
-    value: string;
-    onChange: ChangeEventHandler;
-};
 function Button(props: ButtonProps) {
     const { buttonName, clickHandler, value } = props;
     return (
@@ -56,15 +53,18 @@ function Textarea(props: TextAreaProps) {
 }
 
 type Props = {
-    url: string;
+    url?: string;
     taskID: string;
 };
 
-const TaskDetails: FC<Props> = ({ url, taskID }) => {
+const TaskDetails: FC<Props> = ({ taskID }) => {
     const router = useRouter();
     const isAuthorized = useContext(isUserAuthorizedContext);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [taskTitle, setTaskTitle] = useState<string[]>([]);
+    const [id, setId] = useState<string[]>([]);
+    const [isFetched, setIsFetched] = useState<boolean>(false);
     const initialDataRef = useRef<Record<string, any> | undefined>({});
     const { data, isError, isLoading } = useGetTaskDetailsQuery(taskID);
     const { SUCCESS, ERROR } = ToastTypes;
@@ -122,11 +122,43 @@ const TaskDetails: FC<Props> = ({ url, taskID }) => {
         }
     }
 
+    const fetchDependentTasks = async (
+        taskDetails: taskDetailsDataType['taskData']
+    ) => {
+        try {
+            if (taskDetails?.dependsOn) {
+                const dependsOnTitles = await Promise.all(
+                    taskDetails.dependsOn.map(async (taskId: string) => {
+                        const { requestPromise } = fetch({
+                            url: `${TASKS_URL}/${taskId}/details`,
+                        });
+                        const data = await requestPromise;
+                        return [data?.data?.taskData?.title, taskId];
+                    })
+                );
+                const titles = dependsOnTitles.map(
+                    (innerArray) => innerArray[0]
+                );
+                const ids = dependsOnTitles.map(
+                    (innerArrays) => innerArrays[1]
+                );
+                setTaskTitle(titles);
+                setId(ids);
+                setIsFetched(true);
+            }
+        } catch (error) {
+            console.error('Error while fetching taskdependency', error);
+        }
+    };
+    if (taskDetailsData && !isFetched) {
+        fetchDependentTasks(taskDetailsData);
+    }
+    const navigateToTask = (taskId: string) => {
+        router.push(`/tasks/${taskId}`);
+    };
     const shouldRenderParentContainer = () => !isLoading && !isError && data;
-
     return (
-        <>
-            <NavBar />
+        <Layout hideHeader={true}>
             {renderLoadingComponent()}
             {shouldRenderParentContainer() && (
                 <div className={classNames.parentContainer}>
@@ -208,6 +240,39 @@ const TaskDetails: FC<Props> = ({ url, taskID }) => {
                                     />
                                 </div>
                             </TaskContainer>
+                            <TaskContainer
+                                title="Task DependsOn"
+                                hasImg={false}
+                            >
+                                <ol
+                                    className={
+                                        classNames[
+                                            'task_dependency_list_container'
+                                        ]
+                                    }
+                                >
+                                    {taskTitle.length ? (
+                                        taskTitle.map((title, index) => (
+                                            <Link
+                                                href={`/tasks/${id[index]}`}
+                                                key={index}
+                                            >
+                                                <li
+                                                    onClick={() =>
+                                                        navigateToTask(
+                                                            id[index]
+                                                        )
+                                                    }
+                                                >
+                                                    {title}
+                                                </li>
+                                            </Link>
+                                        ))
+                                    ) : (
+                                        <p>No Dependency</p>
+                                    )}
+                                </ol>
+                            </TaskContainer>
                         </section>
 
                         <section className={classNames.rightContainer}>
@@ -260,7 +325,7 @@ const TaskDetails: FC<Props> = ({ url, taskID }) => {
                     </section>
                 </div>
             )}
-        </>
+        </Layout>
     );
 };
 
